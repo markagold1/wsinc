@@ -51,7 +51,6 @@ function [N,fstop,Hdb,f,b,w,info] = find_ntaps(fc,fstop,fs,Adb,win)
     fc0 = fc / fs;
     fstop0 = fstop / fs;
     tbw = fstop0 - fc0;
-    tbw2 = tbw / (2*fc0);
 
     N = ceil(1/tbw * (Adb - 8) / 14); % fharris eq. 3.11
     if rem(N,2) == 0
@@ -65,8 +64,7 @@ function [N,fstop,Hdb,f,b,w,info] = find_ntaps(fc,fstop,fs,Adb,win)
     f0 = f0(f0>0 & f0<0.5);
 
     iters = 0;
-    tol = 1 / 100;
-    %incr = ceil(N/2);
+    tol = 1e-9;
     incr = N;
     if rem(incr,2) == 1
         incr = incr + 1;
@@ -95,7 +93,6 @@ function [N,fstop,Hdb,f,b,w,info] = find_ntaps(fc,fstop,fs,Adb,win)
             end
         else
             tbw_cand = (f0(ix) - fc0)/(2*fc0);
-            %err = tbw_cand / tbw2 - 1;
             err = f0(ix) - fstop0;
             if abs(err) < abs(best_err)
                 if isnan(best_ix)
@@ -105,8 +102,7 @@ function [N,fstop,Hdb,f,b,w,info] = find_ntaps(fc,fstop,fs,Adb,win)
                 best_N = N;
                 best_ix = ix;
             end
-            %if inrange(err, -tol, 0)
-            if inrange(err, -1e-9, 0)
+            if inrange(err, -tol, 0)
                 break
             elseif err > 0
                 if sgn == -1
@@ -142,7 +138,7 @@ function [N,fstop,Hdb,f,b,w,info] = find_ntaps(fc,fstop,fs,Adb,win)
         end
         if iters >= 50
             if best_err > 0
-                N = best_N + 1;
+                N = best_N + 2;
             else
                 N = best_N;
             end
@@ -169,22 +165,27 @@ function [N,fstop,Hdb,f,b,w,info] = find_ntaps(fc,fstop,fs,Adb,win)
     end % while
 
     [b,w,N,wsincinfo] = wsinc(fc0,1,Adb,win,N);
-    Hdb = 20*log10(abs(fresp(b,1,f0,1)));
+    Hdb = 20*log10(abs(fresp(b,1,f0(nfreq:nfreq+2),1)));
 
-    if Hdb(nfreq+1) + Adb > 1
+    if Hdb(2) + Adb > 1
         fprintf(2,'Failed to converge (win=%s, err=%.4f, N=%d Hdb(fstop)=%.1f).\n', ...
             win,err,N,Hdb(nfreq+1));
     end
 
+    % Final frequency response
+    f = (0:2^15)/2^15 * fs/2;
+    Hdb = 20*log10(abs(fresp(b,1,f,fs)));
+
     % collect some useful info
+    flong = (0:2^18)/2^18 * fs/2;
+    Hdblong = interp1(f,Hdb,flong);
     info = struct();
     info.win = win;
     info.winbeta = wsincinfo.beta;
     info.nvec = nvec;
     info.errvec = errvec;
-
-    % Final frequency response
-    f = (0:2^18)/2^18 * fs/2;
-    Hdb = 20*log10(abs(fresp(b,1,f,fs)));
+    info.pt1db = round(flong(find(Hdblong>-0.1,1,'last')));
+    info.onedb = round(flong(find(Hdblong>-1,1,'last')));
+    info.threedb = round(flong(find(Hdblong>-3,1,'last')));
 
 end % function

@@ -14,7 +14,7 @@ function p = plotres(res,figno)
        leg{end+1} = res{kk}.window;
     end
     p = plot(f,Hdb,'LineWidth',1.5);
-    legend(leg);
+    hleg = legend(leg);
     if ~isoctave()
         xtickformat('usd');
         xtickformat('%.0f');
@@ -23,5 +23,7 @@ function p = plotres(res,figno)
     xlabel('Frequency (Hz)');
     ylabel('Gain (dB)');
     title('Magnitude Responses');
+    set(gca,'FontSize',14);
+    set(hleg,'FontSize',10);
 
 end % function

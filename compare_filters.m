@@ -3,10 +3,13 @@ function results_c = compare_filters(fc,fstop,fs,Adb,varargin)
 %
 % A tool to design and compare windowed sinc FIR filters.
 %
-% Given a user-supplied filter spec, COMPARE_FILTERS designs a
-% set of windowed sinc FIR filters using several common window
-% types and compares the results. This allows a user to make an
-% informed choice of window best suited for their application.
+% COMPARE_FILTERS takes a user-supplied filter spec and designs
+% a set of windowed sinc FIR filters using several common window
+% types. It then compares the resulting filters in terms of
+% complexity (number of coefficients), passband flatness, and
+% and stopband rejection. This helps a user make an informed 
+% choice in selecting an implementation best suited to their
+% application.
 %
 % The tool designs lowpass, highpass, and bandpass filters with
 % the following built-in windows: Hann, Hamming, Kaiser, Blackman,
@@ -14,10 +17,11 @@ function results_c = compare_filters(fc,fstop,fs,Adb,varargin)
 %
 % Optionally it can accept one or more user-supplied windows as a
 % list (cell array) of function handles referencing functions that
-% use the MATLAB or GNU Octave window function API. That is, function 
-% handles that take a first argument for window length and optionally
-% a second argument containing a window shaping parameter. Examples
-% of such functions include bartlett(L) and chebwin(L,r).
+% use the MATLAB or GNU Octave window function API. That is, the 
+% tool accepts handles to functions that take a first argument
+% containing the window length and an optional second argument to
+% specify a window shaping parameter. Examples of such functions
+% include bartlett(L) and chebwin(L,r).
 %
 % COMPARE_FILTERS is compatible with MATLAB and GNU Octave. It is
 % implemented so as not to require any MATLAB toolboxes or GNU
@@ -50,7 +54,7 @@ function results_c = compare_filters(fc,fstop,fs,Adb,varargin)
 %                'bandpass' (default 'lowpass')
 %   user_win_c...optional cell array of function handles to window
 %                function; for example {'@tukeywin','gausswin,3.5'}
-%                adds comparisons for Tukey window and a Gaussian
+%                adds comparisons for a Tukey window and a Gaussian
 %                window with shaping factor of 3.5; as shown in the
 %                example, if the window function uses a shaping
 %                factor it is included in the cell after the window
@@ -61,47 +65,49 @@ function results_c = compare_filters(fc,fstop,fs,Adb,varargin)
 %   results_c....output: cell array containing windowed sinc design
 %                and performance measurements; Each cell contains
 %                a struct with the following members
+%                type...........filter type, one of 'lowpass', 'highpass',
+%                               or 'bandpass'
 %                window.........name of window
-%                window_param...window shaping parameter, if applicable
+%                window_param...window shaping parameter
 %                ntaps..........number of filter coefficients
-%                fc.............6dB cutoff frequency design spec in Hz
-%                fstop..........stopband frequency design spec in Hz
-%                fs.............sampling frequency design spec in Hz
-%                Adb............stopband attenuation design spec in dB
-%                pt1db..........measured passband 0.1 dB frequency
-%                onedb..........measured passband 1 dB frequency
-%                threedb........measured passband 3 dB frequency
-%                Psbdb..........measured total stopband power relative to 0 dB
+%                fc.............6dB cutoff frequency design spec (Hz)
+%                fstop..........stopband frequency design spec (Hz)
+%                fs.............sampling frequency design spec (Hz)
+%                Adb............stopband attenuation design spec (dB)
+%                pt1db..........measured passband 0.1 dB frequency (Hz)
+%                onedb..........measured passband 1 dB frequency (Hz)
+%                threedb........measured passband 3 dB frequency (Hz)
+%                Psbdb..........measured average stopband attenuation (dB)
 %                cofs...........1-d array of filter coefficients
 %                wcofs..........1-d array of window coefficients
-%                Hdb............1-d array of magnitude reponse in dB
-%                f..............1-d array of frequencies in Hz
+%                Hdb............1-d array of magnitude reponses (dB)
+%                f..............1-d array of frequencies (Hz)
 %   Upon completion, a table containng a textual summary of results is 
 %   displayed with the following columns
 %               Window.........Name of window including shaping factor,
 %                              if applicable
-%               Ntaps..........Number of filter coefficients needed
-%               Fc.............Cutoff frequency spec (Hz) designed to;
+%               Ntaps..........Number of filter coefficients
+%               Fc.............Cutoff frequency spec (Hz);
 %                              In bandpass designs, two columns are
-%                              displayed Fc1 and Fc2, respectively
+%                              displayed, Fc1 and Fc2, respectively
 %                              the lower and upper cutoff frequencies
-%               Fstop..........Stopband frequency spec (Hz) designed to;
+%               Fstop..........Stopband frequency spec (Hz);
 %                              In bandpass designs, two columns are
-%                              displayed Fstop1 and Fstop2, the lower
+%                              displayed, Fstop1 and Fstop2, the lower
 %                              and upper stopband frequencies
-%               Fs.............Sampling frequency spec (Hz) designed to
-%               Adb............Stopband attenuation spec (dB) designed to
+%               Fs.............Sampling frequency spec (Hz)
+%               Adb............Stopband attenuation spec (dB)
 %               F.1db..........Frequency (Hz) at which the response is
 %                              -0.1 dB (measure of passband flatness);
-%                              In bandpass designs, this column displays
+%                              In bandpass designs this column displays
 %                              as BW.1db, the 0.1 dB bandwidth
 %               F1db...........Frequency (Hz) at which the response is
 %                              -1 dB (measure of passband flatness);
-%                              In bandpass designs, this column displays
+%                              In bandpass designs this column displays
 %                              as BW1db, the 1 dB bandwidth
 %               F3db...........Frequency (Hz) at which the response is
 %                              -3 dB (measure of passband flatness);
-%                              In bandpass designs, this column displays
+%                              In bandpass designs this column displays
 %                              as BW3db, the 3 dB bandwidth
 %               Psbdb..........Average stopband attenuation (measure
 %                              of spectral purity)
@@ -125,7 +131,7 @@ function results_c = compare_filters(fc,fstop,fs,Adb,varargin)
 %  The results show that a Kaiser window with beta=3.4 satisfies the spec
 %  with the fewest coefficients. The Hamming and Blackman windows provide
 %  the most stopband attenuation (at the expense of more coefficients) 
-%  while the Parzen window has the flastest passband.
+%  while the Parzen window has the flatest passband.
 %
 %  Plot results using the included plotres() utility.
 %  >> plotres(res);
@@ -145,10 +151,10 @@ function results_c = compare_filters(fc,fstop,fs,Adb,varargin)
 %  
 %  This example adds Chebychev and Gaussian (shape factor=3.5) windows.
 %  The Gaussian design provides the flatest 3dB bandwidth while the
-%  Chebychev window does not improve passband or stopband responses
+%  Chebychev window does not improve passband or stopband responses,
 %  nor complexity compared to the built-in windows.
 %  
-% Example 3: You can bypass the analysis of built-in windows by setting
+% Example 3: You can bypass analysis of built-in windows by setting
 % the last user window in the list to 'break'.
 %  >> res = compare_filters(10e3,12e3,64e3,40,{'@flattopwin','break'});
 %  Window             Ntaps       Fc    Fstop        Fs    Adb    F.1db     F1db     F3db   Psbdb
@@ -227,7 +233,7 @@ function results_c = compare_filters(fc,fstop,fs,Adb,varargin)
 
     results_c = {};    
     for kk = 1:numel(windows)
-        if Adb > 60 && any(strfind(lower(windows{kk}),'ham'))
+        if Adb > 60 && strcmpi(windows{kk},'hamming')
             continue
         end
         win = windows{kk};
@@ -247,7 +253,7 @@ function results_c = compare_filters(fc,fstop,fs,Adb,varargin)
         rec.onedb = search_info.onedb;
         rec.threedb = search_info.threedb;
         Hmagsq = 10.^(Hdb/10);
-        % Total stopband atten dB:
+        % Average stopband atten dB:
         rec.Psbdb = round(10*log10(sum(Hmagsq(f>=fstop))/numel(Hmagsq(f>=fstop))));
         rec.fs = lpf_spec.fs;
         rec.Adb = lpf_spec.Adb;

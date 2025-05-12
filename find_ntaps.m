@@ -80,19 +80,18 @@ function [N,fstop,Hdb,f,b,w,info] = find_ntaps(fc,fstop,fs,Adb,win)
 
         [b,w,N] = wsinc(fc0,1,Adb,win,N);
         Hdb = 20*log10(abs(fresp(b,1,f0,1)));
-        ix = find(Hdb > -Adb, 1, 'last');
+        ix = find(Hdb > -Adb, 1, 'last') + 1;
         if isempty(ix)
             N = 2 * N + iters;
             if rem(N,2) == 0
                 N = N + 1;
             end
-        elseif ix == numel(Hdb)
+        elseif ix >= numel(Hdb)
             N = ceil(1.1 * N);
             if rem(N,2) == 0
                 N = N + 1;
             end
         else
-            tbw_cand = (f0(ix) - fc0)/(2*fc0);
             err = f0(ix) - fstop0;
             if abs(err) < abs(best_err)
                 if isnan(best_ix)

@@ -7,9 +7,8 @@ function results_c = compare_filters(fc,fstop,fs,Adb,varargin)
 % a set of windowed sinc FIR filters using several common window
 % types. It then compares the resulting filters in terms of
 % complexity (number of coefficients), passband flatness, and
-% and stopband rejection. This helps a user make an informed 
-% choice in selecting an implementation best suited to their
-% application.
+% and stopband rejection. This helps you make an informed choice
+% in selecting an implementation best suited to your application.
 %
 % The tool designs lowpass, highpass, and bandpass filters with
 % the following built-in windows: Hann, Hamming, Kaiser, Blackman,
@@ -21,7 +20,14 @@ function results_c = compare_filters(fc,fstop,fs,Adb,varargin)
 % tool accepts handles to functions that take a first argument
 % containing the window length and an optional second argument to
 % specify a window shaping parameter. Examples of such functions
-% include bartlett(L) and chebwin(L,r).
+% include bartlett(L) and chebwin(L,r). This feature makes it
+% possible to create your own window function for evaluation.
+%
+% The tool runs an iterative search algorithm to determine the
+% minimum number of filter coefficients needed to satisfy the
+% design specifications. A table of results is then displayed,
+% one row per window type, allowing you to compare different
+% filter implementations.
 %
 % COMPARE_FILTERS is compatible with MATLAB and GNU Octave. It is
 % implemented so as not to require any MATLAB toolboxes or GNU

@@ -43,8 +43,7 @@ function [b,w,Nused,info] = wsinc(fc,fs,Adb,win,N)
     n = -Nb2:Nb2;
     fp = fc/fnyq; % Fpass normalized 0<fp<1
     b = sin(pi*n*fp)./(pi*n);
-    u = find(n==0);
-    b(u) = fp;
+    b(n==0) = fp;
 
     % window
     if win(1) == '@'

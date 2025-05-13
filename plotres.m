@@ -1,11 +1,20 @@
-function p = plotres(res,figno)
+function p = plotres(res,varargin)
 
-    if nargin == 2
-        figure(figno)
-    else
-        figure
+    if nargin == 1
+        figure;
     end
-    
+
+    xscale = 'linear';
+    for kk = 1:numel(varargin)
+        thisarg = varargin{kk};
+        if isnumeric(thisarg)
+            figure(thisarg);
+        elseif ischar(thisarg) && ...
+          (strcmpi(thisarg,'linear') || strcmpi(thisarg,'log'))
+            xscale = lower(thisarg);
+        end
+    end
+
     f = res{1}.f;
     Hdb = nan(numel(f),numel(res));
     leg = {};
@@ -25,5 +34,8 @@ function p = plotres(res,figno)
     title('Magnitude Responses');
     set(gca,'FontSize',14);
     set(hleg,'FontSize',10);
+    if strcmpi(xscale,'log')
+        set(gca,'XScale','log');
+    end
 
 end % function

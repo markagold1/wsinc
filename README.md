@@ -91,7 +91,7 @@ You can plot results using the included plotres() utility.
 ![Results plot 1](./images/example_1.png "Filter Comparison")
  
 ### Example 2: Supply your own window functions
-This example adds Chebychev and Gaussian (shape factor=3.5) windows.  The Gaussian design provides the flatest 3dB bandwidth while the Chebychev window does not improve complexity, passband or stopband responses compared to the built-in windows.
+This example adds Chebychev and Gaussian (shape factor=3.5) windows.  The Gaussian design provides the flatest 3dB bandwidth while the Chebychev window proivdes no improvement in complexity, passband or stopband responses compared to the built-in windows.
 ```
 >> res = compare_filters(10e3,12e3,64e3,40,{'@chebwin','@gausswin,3.5'});
 ```
@@ -138,7 +138,7 @@ plotres(res);
 ```
 ![Results plot 4](./images/example_4.png "Highpass filters")
 
-### Example 5: Bbandpass filter design
+### Example 5: Bandpass filter design
 ```
  >> res = compare_filters([6e3 26e3],[4e3 28e3],64e3,40,'bandpass');
 ```
@@ -176,7 +176,7 @@ plotres(res);
 | nuttall          |  14263   | 25000  |  30000   | 6400000 |   120  |  23901  | 24377  | 24719   |  -156  |
 | albrecht         |   6941   | 25000  |  30000   | 6400000 |   120  |  22241  | 23462  | 24304   |  -167  |
 
-Notice the order of magnitude plus increase in complexity of the Parzen design compared to Kaiser, a steep price for a mere 5 dB additional rejection and modest increase in passband flatness. A better trade may be the Albrecht design which provides 17 dB better stopband for a 26% increase in complexity compared to Kaiser.
+Notice the order of magnitude plus increase in complexity of the Parzen design compared to Kaiser, a steep price for a mere 5 dB additional rejection and modest improvement in passband flatness. A better trade may be the Albrecht design which provides 17 dB better stopband for a 26% increase in complexity compared to Kaiser.
 
 ```
 plotres(res);

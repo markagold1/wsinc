@@ -75,67 +75,74 @@ function [N,fstop,Hdb,f,b,w,info] = find_ntaps(fc,fstop,fs,Adb,win)
     early_term = 0;
     err = 1;
     sgn = 1;
+    MAX_ITERS = 50;
     while 1
         iters = iters + 1;
-
         [b,w,N] = wsinc(fc0,1,Adb,win,N);
-        Hdb = 20*log10(abs(fresp(b,1,f0,1)));
-        ix = find(Hdb > -Adb, 1, 'last') + 1;
-        if isempty(ix)
-            N = 2 * N + iters;
-            if rem(N,2) == 0
-                N = N + 1;
-            end
-        elseif ix >= numel(Hdb)
-            N = ceil(1.1 * N);
-            if rem(N,2) == 0
-                N = N + 1;
-            end
-        else
-            err = f0(ix) - fstop0;
-            if abs(err) < abs(best_err)
-                if isnan(best_ix)
-                    sgn = sign(err);
+
+        if ~early_term
+
+            Hdb = 20*log10(abs(fresp(b,1,f0,1)));
+            ix = find(Hdb > -Adb, 1, 'last') + 1;
+            if isempty(ix)
+                N = 2 * N + iters;
+                if rem(N,2) == 0
+                    N = N + 1;
                 end
-                best_err = err;
-                best_N = N;
-                best_ix = ix;
-            end
-            if inrange(err, -tol, 0)
-                break
-            elseif err > 0
-                if sgn == -1
-                    incr = max(ceil(incr/2),2);
+            elseif ix >= numel(Hdb)
+                N = ceil(1.1 * N);
+                if rem(N,2) == 0
+                    N = N + 1;
                 end
-                if rem(incr,2) == 1
-                    incr = incr + 1;
-                end
-                N = N + incr;
-            else % err < 0
-                if sgn == 1
-                    incr = max(ceil(incr/2),2);
-                end
-                while incr >= N
-                    incr = max(ceil(incr/2),2);
-                end
-                if rem(incr,2) == 1
-                    incr = incr - 1;
-                end
-                incr = max(incr,2);
-                N = N - incr;
-                N = max(N,11);
-            end
-            if err > 0
-                sgn = 1;
             else
-                sgn = -1;
+                err = f0(ix) - fstop0;
+                if abs(err) < abs(best_err)
+                    if isnan(best_ix)
+                        sgn = sign(err);
+                    end
+                    best_err = err;
+                    best_N = N;
+                    best_ix = ix;
+                end
+                if inrange(err, -tol, 0)
+                    MAX_ITERS = 150;
+                    early_term = 1;
+                elseif err > 0
+                    if sgn == -1
+                        incr = max(ceil(incr/2),2);
+                    end
+                    if rem(incr,2) == 1
+                        incr = incr + 1;
+                    end
+                    N = N + incr;
+                else % err < 0
+                    if sgn == 1
+                        incr = max(ceil(incr/2),2);
+                    end
+                    while incr >= N
+                        incr = max(ceil(incr/2),2);
+                    end
+                    if rem(incr,2) == 1
+                        incr = incr - 1;
+                    end
+                    incr = max(incr,2);
+                    N = N - incr;
+                    N = max(N,11);
+                end
+                if err > 0
+                    sgn = 1;
+                else
+                    sgn = -1;
+                end
             end
-        end
-        if N > 100000
-            % Too many coefficients. Design did not converge.
-            break
-        end
-        if iters >= 50
+            if N > 100000
+                % Too many coefficients. Design did not converge.
+                break
+            end
+
+        end % if ~early_term
+
+        if iters >= MAX_ITERS
             if best_err > 0
                 N = best_N + 2;
             else
@@ -156,11 +163,17 @@ function [N,fstop,Hdb,f,b,w,info] = find_ntaps(fc,fstop,fs,Adb,win)
             if all(nhist == [0 2 0 2]) ...
             || all(nhist == [0 0 0 0]) ...
             || all(nhist == [0 -1 0 -1])
+                MAX_ITERS = 150;
                 early_term = 1;
-                break
             end
         end
-           
+
+        if sum(b) < 0.98 && early_term == 1
+            N = N + 2;
+        elseif early_term == 1
+            break
+        end
+
     end % while
 
     [b,w,N,wsincinfo] = wsinc(fc0,1,Adb,win,N);
@@ -168,7 +181,7 @@ function [N,fstop,Hdb,f,b,w,info] = find_ntaps(fc,fstop,fs,Adb,win)
 
     if Hdb(2) + Adb > 1
         fprintf(2,'Failed to converge (win=%s, err=%.4f, N=%d Hdb(fstop)=%.1f).\n', ...
-            win,err,N,Hdb(nfreq+1));
+            win,err,N,Hdb(2));
     end
 
     % Final frequency response

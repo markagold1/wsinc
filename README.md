@@ -1,6 +1,6 @@
 ## wsinc
 
-A Google search of "Windowed Sinc Filter" returns page after page of tutorials and tools. Sadly there are none I could find that provide a side by side comparison of filters designed with different windows according to a spec. This tool exists to fill that void. 
+If you Google "Windowed Sinc Filter" you'll get page after page of papers, tutorials, and tools. Sadly none will offer side by side comparisons of filters designed using different windows all to a common spec. Until now.
 
 COMPARE_FILTERS takes a user-supplied filter spec and designs a set of windowed sinc FIR filters using several common window types. It then compares the resulting filters in terms of complexity (number of coefficients), passband flatness, and stopband rejection. This helps you make an informed choice in selecting an implementation best suited to your application.
 
